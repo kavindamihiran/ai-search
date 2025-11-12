@@ -1,9 +1,11 @@
-# AI Search Algorithm Visualizer
+# 🤖 AI Search Algorithm Visualizer
 
-🤖 An interactive web-based visualizer for classic AI search algorithms with dual deployment options: a standalone version for GitHub Pages and a full-featured Next.js application with user accounts.
+An interactive web-based visualizer for classic AI search algorithms built with Brython (Python in the browser).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Pages](https://img.shields.io/badge/demo-live-success)](https://yourusername.github.io/ai-search-v2/)
+[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://ashfaknawshad.github.io/aisearch-v2/)
+
+## 🚀 [**View Live Demo**](https://ashfaknawshad.github.io/aisearch-v2/)
 
 ## ✨ Features
 
