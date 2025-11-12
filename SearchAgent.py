@@ -760,7 +760,15 @@ class SearchAgent:
                         node = backward_visited[node]
                     
                     self.path_found = forward_path + backward_path
-                    self.path_cost = len(self.path_found) - 1
+                    
+                    # Calculate actual path cost using edge weights
+                    cost = 0
+                    for i in range(len(self.path_found) - 1):
+                        from_node = self.get_node_by_name(self.path_found[i])
+                        to_node = self.get_node_by_name(self.path_found[i + 1])
+                        if from_node and to_node:
+                            cost += from_node.get_weight(to_node)
+                    self.path_cost = cost
                     
                     # Mark path
                     for node_name in self.path_found:
@@ -813,7 +821,15 @@ class SearchAgent:
                         node = backward_visited[node]
                     
                     self.path_found = forward_path + backward_path
-                    self.path_cost = len(self.path_found) - 1
+                    
+                    # Calculate actual path cost using edge weights
+                    cost = 0
+                    for i in range(len(self.path_found) - 1):
+                        from_node = self.get_node_by_name(self.path_found[i])
+                        to_node = self.get_node_by_name(self.path_found[i + 1])
+                        if from_node and to_node:
+                            cost += from_node.get_weight(to_node)
+                    self.path_cost = cost
                     
                     # Mark path
                     for node_name in self.path_found:

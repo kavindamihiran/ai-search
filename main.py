@@ -1288,9 +1288,9 @@ class GraphVisualizer:
             depth_container.style.display = 'none'
         
         # Algorithm categories
-        informed_algorithms = ['greedy', 'astar']  # Use both heuristic and path cost
-        cost_algorithms = ['ucs']  # Use only path cost (edge weights)
-        uninformed_algorithms = ['bfs', 'dfs', 'dls', 'ids', 'bidirectional']  # Use neither
+        informed_algorithms = ['greedy', 'astar']  # Use both heuristic and path cost for decisions
+        cost_algorithms = ['ucs']  # Use only path cost (edge weights) for decisions
+        uninformed_algorithms = ['bfs', 'dfs', 'dls', 'ids', 'bidirectional']  # Don't use weights for decisions, but still calculate path cost
         
         heuristic_toggle_btn = document['btn-toggle-labels']
         
@@ -1320,7 +1320,7 @@ class GraphVisualizer:
             edit_weight_btn.style.opacity = '1'
             edit_weight_btn.title = 'Edit Weight (W)'
             
-            print(f'ℹ️ {algo.upper()}: Heuristics and path costs are both used')
+            print(f'ℹ️ {algo.upper()}: Uses heuristics and path costs for decisions')
             
         elif algo in cost_algorithms:
             # UCS: Hide heuristics, show path costs
@@ -1330,7 +1330,7 @@ class GraphVisualizer:
                 self.render()
             heuristic_toggle_btn.disabled = True
             heuristic_toggle_btn.style.opacity = '0.5'
-            heuristic_toggle_btn.title = 'Heuristics not used by UCS (only path costs matter)'
+            heuristic_toggle_btn.title = 'Heuristics not used by UCS'
             
             # Disable heuristic editing, enable weight editing
             edit_heuristic_btn.disabled = True
@@ -1341,28 +1341,28 @@ class GraphVisualizer:
             edit_weight_btn.style.opacity = '1'
             edit_weight_btn.title = 'Edit Weight (W)'
             
-            print(f'ℹ️ UCS: Only path costs (edge weights) are used')
+            print(f'ℹ️ UCS: Uses path costs (edge weights) for decisions')
             
         elif algo in uninformed_algorithms:
-            # Uninformed: Hide both heuristics and path costs
+            # Uninformed: Hide heuristics, but ALLOW weight editing (path cost still calculated)
             self.current_algo_type = 'uninformed'
             if self.show_labels:
                 self.show_labels = False
                 self.render()
             heuristic_toggle_btn.disabled = True
             heuristic_toggle_btn.style.opacity = '0.5'
-            heuristic_toggle_btn.title = 'Heuristics and costs not used by this algorithm'
+            heuristic_toggle_btn.title = 'Heuristics not used by this algorithm'
             
-            # Disable both editing tools
+            # Enable weight editing for all algorithms (path cost always displayed)
             edit_heuristic_btn.disabled = True
             edit_heuristic_btn.style.opacity = '0.5'
             edit_heuristic_btn.title = 'Heuristics not used by uninformed search'
             
-            edit_weight_btn.disabled = True
-            edit_weight_btn.style.opacity = '0.5'
-            edit_weight_btn.title = 'Edge weights not used by uninformed search'
+            edit_weight_btn.disabled = False
+            edit_weight_btn.style.opacity = '1'
+            edit_weight_btn.title = 'Edit Weight (W) - Path cost will be calculated and displayed'
             
-            print(f'ℹ️ {algo.upper()}: Uninformed search - heuristics and costs not used')
+            print(f'ℹ️ {algo.upper()}: Doesn\'t use weights for decisions, but path cost is calculated')
         else:
             # Default for bidirectional
             self.current_algo_type = 'uninformed'
