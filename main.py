@@ -260,11 +260,18 @@ class GraphVisualizer:
         self.ctx.lineWidth = 4 if is_selected else 3
         self.ctx.stroke()
         
-        # Node ID with better font
+        # Node ID with smart text color based on node state
+        # Black text for light nodes (empty=white, path=yellow)
+        # White text for dark nodes (source=red, goal=green, visited=purple)
         self.ctx.font = 'bold 14px Inter, -apple-system, BlinkMacSystemFont, sans-serif'
         self.ctx.textAlign = 'center'
         self.ctx.textBaseline = 'middle'
-        text_color = '#111827' if node.state == 'empty' else '#ffffff'
+        
+        if node.state in ['empty', 'path']:
+            text_color = '#111827'  # Black for white/yellow nodes
+        else:
+            text_color = '#ffffff'  # White for red/green/purple nodes
+        
         self.ctx.fillStyle = text_color
         self.ctx.fillText(str(node.name), node.x, node.y - 6)
         
@@ -286,14 +293,20 @@ class GraphVisualizer:
         )
         
         if should_show_heuristic:
-            # Theme-aware text color: white in dark mode, gray in light mode
-            is_dark = 'dark-mode' in document.body.classList
-            text_color = '#ffffff' if is_dark else '#1f2937'
+            # Smart color based on node state (same logic as node name)
+            # Black text for light nodes (empty=white, path=yellow)
+            # White text for dark nodes (source=red, goal=green, visited=purple)
+            if node.state in ['empty', 'path']:
+                text_color = '#111827'  # Black for white/yellow nodes
+            else:
+                text_color = '#ffffff'  # White for red/green/purple nodes
             
             self.ctx.fillStyle = text_color
             self.ctx.font = 'bold 12px Inter, -apple-system, BlinkMacSystemFont, sans-serif'
             self.ctx.textAlign = 'center'
-            self.ctx.fillText(f'h={node.heuristic}', node.x, node.y + 8)
+            # Format as integer (no decimal point)
+            h_value = int(node.heuristic)
+            self.ctx.fillText(f'h={h_value}', node.x, node.y + 8)
     
     def draw_node_on_context(self, ctx, node):
         """Draw a node on a specific context (for export)"""
@@ -810,8 +823,17 @@ class GraphVisualizer:
         if node in self.goal_nodes:
             self.goal_nodes.remove(node)
         
-        # Remove node
+        # Clear selection if this node was selected
+        if self.selected_node == node:
+            self.selected_node = None
+        
+        # Clear edge start if this node was being used for edge creation
+        if self.edge_start_node == node:
+            self.edge_start_node = None
+        
+        # Remove node from dictionary
         del self.nodes[node.name]
+        
         self.save_state()
         self.render()
         self.update_graph_stats()
