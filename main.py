@@ -2027,10 +2027,15 @@ class GraphVisualizer:
         }
         
         if self.search_agent:
+            # Handle Infinity path_cost (when no path found) - convert to null for valid JSON
+            path_cost = self.search_agent.path_cost
+            if path_cost == float('inf'):
+                path_cost = None
+            
             graph_data['results'] = {
                 'success': self.search_agent.success,
                 'path': self.search_agent.path_found,
-                'path_cost': self.search_agent.path_cost,
+                'path_cost': path_cost,
                 'nodes_explored': self.search_agent.nodes_explored
             }
         
@@ -2086,7 +2091,11 @@ class GraphVisualizer:
                 data = json.loads(e.target.result)
                 self.load_graph_from_data(data)
             except Exception as ex:
-                alert(f'Error loading graph: {ex}')
+                import traceback
+                error_msg = str(ex)
+                print(f'Error loading graph: {error_msg}')
+                print(traceback.format_exc())
+                alert(f'Error loading graph: {error_msg}')
         
         reader.bind('load', on_load)
         reader.readAsText(file)
@@ -2105,35 +2114,67 @@ class GraphVisualizer:
         print(f'📊 Loaded graph type: {mode_text}')
         self.update_graph_type_indicator()  # Show the indicator
         
-        # Load nodes
+        # Create a temporary mapping from name to node for lookups
+        name_to_node = {}
+        
+        # Load nodes - create them with node_counter as ID
         for node_data in data['graph']['nodes']:
-            node = Node(node_data['name'], node_data['x'], node_data['y'], node_data['heuristic'])
-            node.state = node_data.get('state', 'empty')
-            self.nodes[node.name] = node
+            node_name = node_data['name']
             
-            # Update node_counter only if node.name is numeric
-            if isinstance(node.name, int):
-                self.node_counter = max(self.node_counter, node.name + 1)
-            elif isinstance(node.name, str) and node.name.isdigit():
-                self.node_counter = max(self.node_counter, int(node.name) + 1)
-            else:
-                # For non-numeric names, just increment counter
-                self.node_counter += 1
+            # Create node with node_counter as ID
+            node = Node(self.node_counter, node_data['x'], node_data['y'], node_data['heuristic'])
+            node.state = node_data.get('state', 'empty')
+            
+            # Store custom name if it's not just a number
+            if isinstance(node_name, str) and not node_name.isdigit():
+                node.custom_name = node_name
+            elif isinstance(node_name, int):
+                node.custom_name = str(node_name)
+            
+            # Store node with node_counter as key
+            self.nodes[self.node_counter] = node
+            # Keep mapping from original name to node for edge loading
+            # Store both string and int versions for JSON compatibility
+            name_to_node[node_name] = node
+            if isinstance(node_name, int):
+                name_to_node[str(node_name)] = node
+            elif isinstance(node_name, str) and node_name.isdigit():
+                name_to_node[int(node_name)] = node
+            
+            self.node_counter += 1
         
-        # Load edges
+        # Load edges using the name mapping
         for node_data in data['graph']['nodes']:
-            node = self.nodes[node_data['name']]
+            node = name_to_node[node_data['name']]
             for neighbor_name, weight in node_data.get('neighbors', {}).items():
-                # neighbor_name can be string or int, just look it up directly
-                neighbor = self.nodes[neighbor_name]
-                node.add_neighbor(neighbor, weight)
+                # Try both string and int versions for neighbor lookup
+                neighbor = name_to_node.get(neighbor_name)
+                if not neighbor and isinstance(neighbor_name, str) and neighbor_name.isdigit():
+                    neighbor = name_to_node.get(int(neighbor_name))
+                elif not neighbor and isinstance(neighbor_name, int):
+                    neighbor = name_to_node.get(str(neighbor_name))
+                
+                if neighbor:
+                    node.add_neighbor(neighbor, weight)
         
-        # Set source and goals
+        # Set source and goals using name mapping
         if data['graph']['source'] is not None:
-            self.source_node = self.nodes[data['graph']['source']]
+            source = data['graph']['source']
+            self.source_node = name_to_node.get(source)
+            if not self.source_node and isinstance(source, str) and source.isdigit():
+                self.source_node = name_to_node.get(int(source))
+            elif not self.source_node and isinstance(source, int):
+                self.source_node = name_to_node.get(str(source))
         
         for goal_name in data['graph'].get('goals', []):
-            self.goal_nodes.append(self.nodes[goal_name])
+            goal_node = name_to_node.get(goal_name)
+            if not goal_node and isinstance(goal_name, str) and goal_name.isdigit():
+                goal_node = name_to_node.get(int(goal_name))
+            elif not goal_node and isinstance(goal_name, int):
+                goal_node = name_to_node.get(str(goal_name))
+            
+            if goal_node:
+                self.goal_nodes.append(goal_node)
         
         self.render()
         self.update_graph_stats()
