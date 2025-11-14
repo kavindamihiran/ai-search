@@ -598,24 +598,28 @@ class SearchAgent:
                 yield
                 return
             
-            # Count unvisited neighbors before expansion
+            # Get unvisited neighbors
             unvisited_neighbors = [n for n in self.get_sorted_neighbors(current) 
                                   if n not in visited and n not in frontier]
             
-            # Expand neighbors (sorted for deterministic tie-breaking)
-            for neighbor in unvisited_neighbors:
-                neighbor.cost = current.cost + current.get_weight(neighbor)
-                neighbor.parent = current
-                frontier.push(neighbor, neighbor.heuristic)
+            # TRUE GREEDY: Pick ONLY the neighbor with lowest heuristic (commits to greedy choice)
+            # This makes greedy incomplete - it can get stuck even when a path exists
+            if len(unvisited_neighbors) > 0:
+                # Sort by heuristic and pick the best one only
+                best_neighbor = min(unvisited_neighbors, key=lambda n: n.heuristic)
+                best_neighbor.cost = current.cost + current.get_weight(best_neighbor)
+                best_neighbor.parent = current
+                frontier.push(best_neighbor, best_neighbor.heuristic)
             
-            # Check if greedy is stuck (no new nodes added to frontier)
-            current_frontier_size = len(frontier.get_all_nodes())
-            if len(unvisited_neighbors) == 0 and current_frontier_size == 0:
-                # Dead-end: no unvisited neighbors and frontier is empty
-                self.success = False
-                self.failure_reason = "Greedy search got stuck in a dead-end"
-                yield
-                return
+            # Check if greedy is stuck (no unvisited neighbors)
+            if len(unvisited_neighbors) == 0:
+                # Check if frontier has any nodes left
+                if frontier.is_empty():
+                    # Dead-end: no unvisited neighbors and frontier is empty
+                    self.success = False
+                    self.failure_reason = "Greedy search got stuck in a dead-end"
+                    yield
+                    return
             
             # Update fringe list after expansion
             self.fringe_list = [n.name for n in frontier.get_all_nodes()]
