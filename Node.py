@@ -124,13 +124,22 @@ class Node:
         Returns:
             dict: Node data as dictionary
         """
+        # Export custom_name if available, otherwise use numeric name
+        export_name = self.custom_name if hasattr(self, 'custom_name') else self.name
+        
+        # For neighbors, also use custom_name if available
+        neighbor_dict = {}
+        for n, w in self.neighbors.items():
+            neighbor_name = n.custom_name if hasattr(n, 'custom_name') else n.name
+            neighbor_dict[neighbor_name] = w
+        
         return {
-            'name': self.name,
+            'name': export_name,
             'x': self.x,
             'y': self.y,
             'heuristic': self.heuristic,
             'state': self.state,
-            'neighbors': {n.name: w for n, w in self.neighbors.items()}
+            'neighbors': neighbor_dict
         }
     
     @staticmethod

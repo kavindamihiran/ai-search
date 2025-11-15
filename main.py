@@ -1638,10 +1638,15 @@ class GraphVisualizer:
             elif element_id == 'path-list':
                 element.innerHTML = '<span class="array-empty">No path found yet</span>'
         else:
-            # Format as styled array
+            # Format as styled array - convert node IDs to display names
             formatted_items = []
             for item in data_list:
-                formatted_items.append(f'<span class="array-item">{item}</span>')
+                # Look up node to get custom_name if available
+                display_name = item
+                if item in self.nodes:
+                    node = self.nodes[item]
+                    display_name = node.custom_name if hasattr(node, 'custom_name') else str(item)
+                formatted_items.append(f'<span class="array-item">{display_name}</span>')
             
             html = f'<span class="array-bracket">[</span> '
             html += '<span class="array-comma">, </span>'.join(formatted_items)
@@ -2067,8 +2072,8 @@ class GraphVisualizer:
             },
             'graph': {
                 'nodes': [node.to_dict() for node in self.nodes.values()],
-                'source': self.source_node.name if self.source_node else None,
-                'goals': [node.name for node in self.goal_nodes]
+                'source': (self.source_node.custom_name if hasattr(self.source_node, 'custom_name') else self.source_node.name) if self.source_node else None,
+                'goals': [node.custom_name if hasattr(node, 'custom_name') else node.name for node in self.goal_nodes]
             }
         }
         
@@ -2078,9 +2083,18 @@ class GraphVisualizer:
             if path_cost == float('inf'):
                 path_cost = None
             
+            # Convert path node IDs to custom names
+            path_with_names = []
+            for node_id in self.search_agent.path_found:
+                if node_id in self.nodes:
+                    node = self.nodes[node_id]
+                    path_with_names.append(node.custom_name if hasattr(node, 'custom_name') else node_id)
+                else:
+                    path_with_names.append(node_id)
+            
             graph_data['results'] = {
                 'success': self.search_agent.success,
-                'path': self.search_agent.path_found,
+                'path': path_with_names,
                 'path_cost': path_cost,
                 'nodes_explored': self.search_agent.nodes_explored,
                 'failure_reason': self.search_agent.failure_reason
