@@ -1388,8 +1388,8 @@ class GraphVisualizer:
         elif algo in cost_algorithms:
             # UCS: Enable label toggle to show path costs
             self.current_algo_type = 'cost_only'
-            if self.show_labels:
-                self.show_labels = False
+            if not self.show_labels:
+                self.show_labels = True
                 self.render()
             # Allow the user to toggle labels (show/hide path costs)
             heuristic_toggle_btn.disabled = False
